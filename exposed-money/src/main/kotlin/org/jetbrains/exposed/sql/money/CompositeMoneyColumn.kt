@@ -2,6 +2,7 @@ package org.jetbrains.exposed.sql.money
 
 import org.jetbrains.exposed.sql.BiCompositeColumn
 import org.jetbrains.exposed.sql.Column
+import org.jetbrains.exposed.sql.CompositeColumn
 import org.jetbrains.exposed.sql.DecimalColumnType
 import org.jetbrains.exposed.sql.Table
 import java.math.BigDecimal
@@ -15,7 +16,7 @@ import javax.money.MonetaryAmount
  * @author Vladislav Kisel
  */
 
-class CompositeMoneyColumn<T1 : BigDecimal?, T2 : CurrencyUnit?, R : MonetaryAmount?>(val amount: Column<T1>, val currency: Column<T2>) :
+open class NullableCompositeMoneyColumn<T1 : BigDecimal?, T2 : CurrencyUnit?, R : MonetaryAmount?>(val amount: Column<T1>, val currency: Column<T2>) :
     BiCompositeColumn<T1, T2, R>(
         column1 = amount,
         column2 = currency,
@@ -39,6 +40,16 @@ class CompositeMoneyColumn<T1 : BigDecimal?, T2 : CurrencyUnit?, R : MonetaryAmo
             }
         }
 )
+
+class CompositeMoneyColumn <T1: BigDecimal, T2 : CurrencyUnit, R : MonetaryAmount>(amount: Column<T1>, currency: Column<T2>) :
+        NullableCompositeMoneyColumn<T1, T2, R>(amount, currency) {
+  @Suppress("UNCHECKED_CAST")
+  fun nullable() : NullableCompositeMoneyColumn<BigDecimal?, CurrencyUnit?, MonetaryAmount?>{
+    return with(amount.table) {
+      (this@CompositeMoneyColumn as CompositeColumn<Any>).nullable() as NullableCompositeMoneyColumn<BigDecimal?, CurrencyUnit?, MonetaryAmount?>
+    }
+  }
+}
 
 fun CompositeMoneyColumn(table: Table, precision: Int, scale: Int, amountName: String, currencyName: String) =
     CompositeMoneyColumn<BigDecimal, CurrencyUnit, MonetaryAmount>(

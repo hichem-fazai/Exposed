@@ -10,6 +10,7 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.insertAndGetId
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.tests.DatabaseTestsBase
+import org.jetbrains.exposed.sql.tests.TestDB
 import org.jetbrains.exposed.sql.tests.shared.assertEquals
 import org.junit.Ignore
 import org.junit.Test
@@ -69,6 +70,33 @@ open class MoneyBaseTest : DatabaseTestsBase() {
         }
     }
 
+    @Test
+    fun testSearchByNullableCompositeColumn() {
+        val money = null
+
+        withTables(excludeSettings = listOf(TestDB.MYSQL, TestDB.H2_MYSQL, TestDB.POSTGRESQL, TestDB.POSTGRESQLNG), NullableAccount) {
+            NullableAccount.insertAndGetId {
+                it[composite_money] = money
+            }
+
+            val predicates = listOf(
+                    NullableAccount.composite_money eq money,
+                    (NullableAccount.composite_money.currency eq null),
+                    (NullableAccount.composite_money.amount eq null)
+            )
+
+            predicates.forEach {
+                val found = NullableAccountDao.find { it }
+
+                assertEquals(1L, found.count())
+                val next = found.iterator().next()
+                assertEquals(money, next.money)
+                assertEquals(null, next.currency)
+                assertEquals(null, next.amount)
+            }
+        }
+    }
+
     private fun testInsertedAndSelect(toInsert: Money?) {
         withTables(Account) {
             val accountID = Account.insertAndGetId {
@@ -100,5 +128,23 @@ class AccountDao(id: EntityID<Int>) : IntEntity(id) {
 object Account : IntIdTable("AccountTable") {
 
     val composite_money = compositeMoney(8, AMOUNT_SCALE, "composite_money")
+
+}
+
+class NullableAccountDao(id: EntityID<Int>) : IntEntity(id) {
+
+    val money : MonetaryAmount? by NullableAccount.composite_money
+
+    val currency : CurrencyUnit? by NullableAccount.composite_money.currency
+
+    val amount : BigDecimal? by NullableAccount.composite_money.amount
+
+    companion object : EntityClass<Int, NullableAccountDao>(NullableAccount)
+
+}
+
+object NullableAccount : IntIdTable("AccountTable") {
+
+    val composite_money = compositeMoney(8, AMOUNT_SCALE, "composite_money").nullable()
 
 }
