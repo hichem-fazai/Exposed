@@ -46,7 +46,7 @@ class CompositeMoneyColumn <T1: BigDecimal, T2 : CurrencyUnit, R : MonetaryAmoun
   @Suppress("UNCHECKED_CAST")
   fun nullable() : NullableCompositeMoneyColumn<BigDecimal?, CurrencyUnit?, MonetaryAmount?>{
     return with(amount.table) {
-      (this@CompositeMoneyColumn as CompositeColumn<Any>).nullable() as NullableCompositeMoneyColumn<BigDecimal?, CurrencyUnit?, MonetaryAmount?>
+      (this@CompositeMoneyColumn as CompositeColumn<BigDecimal>).nullable() as NullableCompositeMoneyColumn<BigDecimal?, CurrencyUnit?, MonetaryAmount?>
     }
   }
 }

@@ -74,7 +74,7 @@ open class MoneyBaseTest : DatabaseTestsBase() {
     fun testSearchByNullableCompositeColumn() {
         val money = null
 
-        withTables(excludeSettings = listOf(TestDB.MYSQL, TestDB.H2_MYSQL, TestDB.POSTGRESQL, TestDB.POSTGRESQLNG), NullableAccount) {
+        withTables(NullableAccount) {
             NullableAccount.insertAndGetId {
                 it[composite_money] = money
             }
